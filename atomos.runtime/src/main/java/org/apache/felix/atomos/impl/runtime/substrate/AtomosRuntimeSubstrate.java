@@ -48,7 +48,6 @@ import org.osgi.framework.connect.ConnectFrameworkFactory;
 import org.osgi.framework.namespace.PackageNamespace;
 import org.osgi.framework.wiring.BundleCapability;
 import org.osgi.framework.wiring.BundleRevision;
-
 import sun.misc.Signal;
 
 /**
@@ -94,7 +93,7 @@ public class AtomosRuntimeSubstrate extends AtomosRuntimeBase
         List<SubstrateBundleIndexInfo> tmpIndexBundles = Collections.emptyList();
         if (substrateLibDir == null)
         {
-            URL index = getClass().getResource(ATOMOS_BUNDLES_INDEX);
+            final URL index = getClass().getResource(ATOMOS_BUNDLES_INDEX);
             if (index != null)
             {
                 tmpIndexBundles = new ArrayList<>();
@@ -147,7 +146,7 @@ public class AtomosRuntimeSubstrate extends AtomosRuntimeBase
                             currentBSN, currentVersion, currentPaths));
                     }
                 }
-                catch (IOException e)
+                catch (final IOException e)
                 {
                     throw new RuntimeException(e);
                 }
@@ -161,16 +160,16 @@ public class AtomosRuntimeSubstrate extends AtomosRuntimeBase
                 }
             }
         }
-        this.indexBundles = tmpIndexBundles;
+        indexBundles = tmpIndexBundles;
         this.substrateLibDir = substrateLibDir;
-        this.bootLayer = createBootLayer();
+        bootLayer = createBootLayer();
         try
         {
             // substrate native image does not run shutdown hooks on ctrl-c
             // this works around it by using our own signal handler
             Signal.handle(new Signal("INT"), sig -> System.exit(0));
         }
-        catch (Throwable t)
+        catch (final Throwable t)
         {
             // do nothing if Signal isn't available
         }
@@ -181,7 +180,7 @@ public class AtomosRuntimeSubstrate extends AtomosRuntimeBase
         lockWrite();
         try
         {
-            AtomosLayerSubstrate result = new AtomosLayerSubstrate(
+            final AtomosLayerSubstrate result = new AtomosLayerSubstrate(
                 Collections.emptyList(), nextLayerId.getAndIncrement(), "boot",
                 LoaderType.SINGLE);
             addAtomosLayer(result);
@@ -204,7 +203,7 @@ public class AtomosRuntimeSubstrate extends AtomosRuntimeBase
     @Override
     protected ConnectFrameworkFactory findFrameworkFactory()
     {
-        Iterator<ConnectFrameworkFactory> itr = ServiceLoader.load(
+        final Iterator<ConnectFrameworkFactory> itr = ServiceLoader.load(
             ConnectFrameworkFactory.class, getClass().getClassLoader()).iterator();
         if (itr.hasNext())
         {
@@ -228,14 +227,14 @@ public class AtomosRuntimeSubstrate extends AtomosRuntimeBase
         protected AtomosLayerSubstrate(List<AtomosLayer> parents, long id, String name, LoaderType loaderType, Path... paths)
         {
             super(parents, id, name, loaderType, paths);
-            Set<AtomosBundleInfoBase> foundBundles = new HashSet<>();
+            final Set<AtomosBundleInfoBase> foundBundles = new HashSet<>();
             findSubstrateAtomosBundles(foundBundles);
             atomosBundles = Collections.unmodifiableSet(foundBundles);
         }
 
         AtomosBundleInfoBase getBundleByPackage(Class<?> clazz)
         {
-            Package pkg = clazz.getPackage();
+            final Package pkg = clazz.getPackage();
             if (pkg != null)
             {
                 return packageToAtomos.get(pkg.getName());
@@ -260,7 +259,7 @@ public class AtomosRuntimeSubstrate extends AtomosRuntimeBase
             if (!indexBundles.isEmpty())
             {
                 indexBundles.forEach((b) -> {
-                    ConnectContent connectContent = new SubstrateIndexConnectContent(
+                    final ConnectContent connectContent = new SubstrateIndexConnectContent(
                         b.index, b.entries);
                     String location;
                     if (connectContent.getEntry(
@@ -282,25 +281,25 @@ public class AtomosRuntimeSubstrate extends AtomosRuntimeBase
             }
             else
             {
-                for (File f : substrateLibDir.listFiles())
+                for (final File f : substrateLibDir.listFiles())
                 {
                     if (f.isFile())
                     {
                         try (JarFile jar = new JarFile(f))
                         {
-                            Attributes headers = jar.getManifest().getMainAttributes();
+                            final Attributes headers = jar.getManifest().getMainAttributes();
                             String symbolicName = headers.getValue(
                                 Constants.BUNDLE_SYMBOLICNAME);
                             if (symbolicName != null)
                             {
-                                int semiColon = symbolicName.indexOf(';');
+                                final int semiColon = symbolicName.indexOf(';');
                                 if (semiColon != -1)
                                 {
                                     symbolicName = symbolicName.substring(0, semiColon);
                                 }
                                 symbolicName = symbolicName.trim();
 
-                                ConnectContent connectContent = new SubstrateJarConnectContent(
+                                final ConnectContent connectContent = new SubstrateJarConnectContent(
                                     f.getName(), AtomosRuntimeSubstrate.this);
                                 connectContent.open();
                                 String location;
@@ -317,14 +316,14 @@ public class AtomosRuntimeSubstrate extends AtomosRuntimeBase
                                         location = getName() + ":" + location;
                                     }
                                 }
-                                Version version = Version.parseVersion(
+                                final Version version = Version.parseVersion(
                                     headers.getValue(Constants.BUNDLE_VERSION));
-                                AtomosBundleInfoBase bundle = new AtomosBundleInfoSubstrate(
+                                final AtomosBundleInfoBase bundle = new AtomosBundleInfoSubstrate(
                                     location, symbolicName, version, connectContent);
                                 bundles.add(bundle);
                             }
                         }
-                        catch (IOException e)
+                        catch (final IOException e)
                         {
                             // ignore and continue
                         }
@@ -360,15 +359,16 @@ public class AtomosRuntimeSubstrate extends AtomosRuntimeBase
 
         void addPackages(Bundle b)
         {
-            AtomosBundleInfoBase atomosBundle = (AtomosBundleInfoBase) getAtomosBundle(
+            final AtomosBundleInfoBase atomosBundle = (AtomosBundleInfoBase) getAtomosBundle(
                 b.getLocation());
             if (atomosBundle != null)
             {
-                BundleRevision r = b.adapt(BundleRevision.class);
+                final BundleRevision r = b.adapt(BundleRevision.class);
                 r.getDeclaredCapabilities(PackageNamespace.PACKAGE_NAMESPACE).forEach(
                     (p) -> packageToAtomos.putIfAbsent((String) p.getAttributes().get(
                         PackageNamespace.PACKAGE_NAMESPACE), atomosBundle));
-                String privatePackages = b.getHeaders("").get("Private-Package");
+                final String privatePackages = b.getHeaders("").get("Private-Package");
+                //TODO: all packages minus exported packes. private is not osgi spec and often deleted
                 if (privatePackages != null)
                 {
                     for (String pkgName : privatePackages.split(","))
@@ -409,7 +409,7 @@ public class AtomosRuntimeSubstrate extends AtomosRuntimeBase
     protected void start(BundleContext bc) throws BundleException
     {
         bc.addBundleListener(bootLayer);
-        for (Bundle b : bc.getBundles())
+        for (final Bundle b : bc.getBundles())
         {
             bootLayer.addPackages(b);
         }

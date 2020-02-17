@@ -8,7 +8,7 @@
     </parent>
     <packaging>pom</packaging>
     <artifactId>org.apache.felix.atomos.tests.testbundles</artifactId>
-    <name>atomos.tests.testbundles</name>
+    <name>org.apache.felix.atomos.tests.testbundles</name>
     <modules>
         <module>atomos.tests.testbundles.service.contract</module>
         <module>atomos.tests.testbundles.service.impl</module>
@@ -18,5 +18,7 @@
         <module>atomos.tests.testbundles.service.user</module>
         <module>atomos.tests.testbundles.service.library</module>
         <module>atomos.tests.testbundles.resources.a</module>
+        <module>atomos.tests.testbundles.substrate.main</module>
+        <module>atomos.tests.testbundles.bom</module>
     </modules>
 </project>
