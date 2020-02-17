@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -94,8 +95,10 @@ public class SubstrateService
 
         final List<String> resources = new ArrayList<>();
 
+        final AtomicLong counter = new AtomicLong(0);
+
         final Stream<SubstrateInfo> bis = files.stream()//
-            .map(path -> create(path, config))//
+            .map(path -> create(counter.getAndIncrement(), path, config))//
             .peek(System.out::println);
 
         bis.forEach(s -> {
@@ -131,7 +134,7 @@ public class SubstrateService
         }
     }
 
-    static SubstrateInfo create(Path path, Config config)
+    static SubstrateInfo create(long id, Path path, Config config)
     {
         final SubstrateInfo info = new SubstrateInfo();
         info.path = path;
@@ -140,14 +143,14 @@ public class SubstrateService
             final Attributes attributes = jar.getManifest().getMainAttributes();
             info.bsn = attributes.getValue(Constants.BUNDLE_SYMBOLICNAME);
             info.version = attributes.getValue(Constants.BUNDLE_VERSION);
-            info.id = info.bsn + "-" + info.version;
+            info.id = Long.toString(id);
 
             final Path out = config.outputDir.resolve(SUBSTRATE_LIB).resolve(info.id);
 
             Files.createDirectories(out);
             info.out = out;
 
-            jar.stream().filter(j -> filter(j, config)).peek(j -> {
+            info.files = jar.stream().filter(j -> filter(j, config)).peek(j -> {
                 try
                 {
                     final Path target = out.resolve(j.getName());
@@ -160,7 +163,8 @@ public class SubstrateService
                     throw new UncheckedIOException(e);
                 }
 
-            }).peek(System.out::println).collect(Collectors.toList());
+            }).peek(System.out::println).map(JarEntry::getName).collect(
+                Collectors.toList());
         }
         catch (final IOException e)
         {
