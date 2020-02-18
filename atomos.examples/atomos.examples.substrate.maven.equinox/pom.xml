@@ -133,8 +133,13 @@
                 <artifactId>org.apache.felix.atomos.maven</artifactId>
                 <version>${atomos.version}</version>
                 <configuration>
+                    <debug>true</debug>
                     <additionalInitializeAtBuildTime>
-                        <additionalInitializeAtBuildTime>org.apache.felix.atomos.impl.runtime.base</additionalInitializeAtBuildTime>
+                        <additionalInitializeAtBuildTime>org.apache.felix.atomos.runtime</additionalInitializeAtBuildTime>
+                        <additionalInitializeAtBuildTime>org.apache.felix.atomos.impl</additionalInitializeAtBuildTime>
+                        <additionalInitializeAtBuildTime>javax.servlet</additionalInitializeAtBuildTime>
+                        <additionalInitializeAtBuildTime>org.apache.felix.service.command.Converter</additionalInitializeAtBuildTime>
+<!--                         <additionalInitializeAtBuildTime>org.apache.felix.atomos.impl.runtime.base</additionalInitializeAtBuildTime> -->
                     </additionalInitializeAtBuildTime>
                     <mainClass>org.apache.felix.atomos.tests.testbundles.substrate.main.GogoConsole</mainClass>
                 </configuration>

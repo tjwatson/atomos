@@ -14,5 +14,6 @@ public class Config
     public String imageName;
     public String nativeImageExec;
     public List<String> additionalInitializeAtBuildTime;
+    public boolean debug = false;
 
 }

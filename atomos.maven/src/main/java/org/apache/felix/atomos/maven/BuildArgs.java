@@ -16,7 +16,7 @@ import org.apache.felix.atomos.maven.ReflectConfig.ClassConfig;
 public class BuildArgs
 {
 
-    private static final String COMMA_ESCAPE = ",\\\n";
+
 
     public static List<String> create(Config config,
         Map<String, ClassConfig> reflectConfigs,
@@ -39,7 +39,7 @@ public class BuildArgs
         }
 
         final String initBuildTime = in.stream().sorted(
-            (o1, o2) -> o1.compareTo(o2)).collect(Collectors.joining(COMMA_ESCAPE));
+            (o1, o2) -> o1.compareTo(o2)).collect(Collectors.joining(","));
 
         if (initBuildTime != null && !initBuildTime.isEmpty())
         {
@@ -82,6 +82,10 @@ public class BuildArgs
         args.add("-H:+TraceClassInitialization");
         args.add("-H:+PrintClassInitialization");
         args.add("--no-fallback");
+        if (config.debug)
+        {
+            args.add("--debug-attach");
+        }
         args.add("-H:Class=" + config.mainClass);
         args.add("-H:Name=" + config.imageName);
         return args;

@@ -51,6 +51,9 @@ public class AtomosMojo extends AbstractMojo
     @Parameter
     private String mainClass;
 
+    @Parameter(defaultValue = "false") //TODO: CHECK GRAAL EE ONLY
+    private boolean debug;
+
     @Parameter
     private String imageName;
 
@@ -103,7 +106,7 @@ public class AtomosMojo extends AbstractMojo
             final List<Path> paths = Files.list(classpath_lib.toPath()).filter(
                 AtomosMojo::isJarFile).collect(Collectors.toList());
 
-            SubstrateService.substrate(paths, config);
+            final Path p = SubstrateService.substrate(paths, config);
 
             final Map<String, ClassConfig> reflectConfigs = ReflectConfig.reflectConfig(
                 paths, config);
@@ -114,6 +117,7 @@ public class AtomosMojo extends AbstractMojo
             final List<String> argsPath = BuildArgs.create(config, reflectConfigs,
                 resourceConfigResult);
 
+            paths.add(p);
             NativeImageBuilder.execute(config, paths, argsPath);
         }
         catch (

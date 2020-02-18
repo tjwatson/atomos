@@ -14,11 +14,13 @@
 package org.apache.felix.atomos.maven;
 
 import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,21 +32,26 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import org.osgi.framework.Constants;
 
 public class SubstrateService
 {
 
-    private static final String SUBSTRATE_LIB = "substrate_lib";
+    /**
+     *
+     */
+    private static final String ATOMOS_SUBSTRATE_JAR = "atomos.substrate.jar";
     private static final Collection<String> DEFAULT_EXCLUDE_NAMES = Arrays.asList(
         "about.html", "DEPENDENCIES", "LICENSE", "NOTICE", "changelog.txt",
         "LICENSE.txt");
     private static final Collection<String> DEFAULT_EXCLUDE_PATHS = Arrays.asList(
         "META-INF/maven/", "OSGI-OPT/");
-    private static final String ATOMOS_BUNDLES = "atomos";
-    private static final String ATOMOS_BUNDLES_INDEX = ATOMOS_BUNDLES + "bundles.index";
-    private static final String ATOMOS_BUNDLE_SEPARATOR = "-----ATOMOS-BUNDLE-SEPARATOR-----";
+    public static final String ATOMOS_BUNDLES = "/atomos/";
+    public static final String ATOMOS_BUNDLES_INDEX = ATOMOS_BUNDLES + "bundles.index";
+    private static final String ATOMOS_BUNDLE_SEPARATOR = "ATOMOS_BUNDLE";
 
     enum EntryType
     {
@@ -80,7 +87,7 @@ public class SubstrateService
         return true;
     }
 
-    public static void substrate(List<Path> files, Config config)
+    public static Path substrate(List<Path> files, Config config)
         throws IOException, NoSuchAlgorithmException
     {
         if (!config.outputDir.toFile().isDirectory())
@@ -90,51 +97,61 @@ public class SubstrateService
         }
         if (!config.outputDir.toFile().exists())
         {
-            Files.createDirectories(config.outputDir.resolve(SUBSTRATE_LIB));
+            Files.createDirectories(config.outputDir);
         }
 
-        final List<String> resources = new ArrayList<>();
+        final Path p = config.outputDir.resolve(ATOMOS_SUBSTRATE_JAR);
+        try (final ZipOutputStream z = new ZipOutputStream(
+            new FileOutputStream(p.toFile()));)
+        {
 
-        final AtomicLong counter = new AtomicLong(0);
-
-        final Stream<SubstrateInfo> bis = files.stream()//
-            .map(path -> create(counter.getAndIncrement(), path, config))//
-            .peek(System.out::println);
-
-        bis.forEach(s -> {
-            resources.add(ATOMOS_BUNDLE_SEPARATOR);
-            resources.add(s.id);
-            resources.add(s.bsn);
-            resources.add(s.version);
-            s.files.forEach(resources::add);
-        });
-        writeBundleIndexFile(config.outputDir, resources);
+            final ZipEntry manifestZipEntry = new ZipEntry("/META-INF/MANIFEST.MF");
+            z.putNextEntry(manifestZipEntry);
+            z.write("Manifest-Version: 1.0".getBytes());
+            final List<String> resources = new ArrayList<>();
+            final AtomicLong counter = new AtomicLong(0);
+            final Stream<SubstrateInfo> bis = files.stream()//
+                .map(path -> create(z, counter.getAndIncrement(), path, config))//
+                .peek(System.out::println);
+            bis.forEach(s -> {
+                resources.add(ATOMOS_BUNDLE_SEPARATOR);
+                resources.add(s.id);
+                resources.add(s.bsn);
+                resources.add(s.version);
+                s.files.forEach(resources::add);
+            });
+            writeBundleIndexFile(z, config.outputDir, resources);
+        }
         System.out.println("end");
+        return p;
     }
 
-    private static void writeBundleIndexFile(Path output, final List<String> resources)
-        throws IOException
+    private static void writeBundleIndexFile(ZipOutputStream z, Path output,
+        final List<String> resources) throws IOException
     {
-        final Path bundlesIndex = output.resolve(ATOMOS_BUNDLES_INDEX);
 
-        Files.newBufferedWriter(bundlesIndex);
+        final ZipEntry e = new ZipEntry(ATOMOS_BUNDLES_INDEX);
+        z.putNextEntry(e);
 
-        try (BufferedWriter writer = Files.newBufferedWriter(bundlesIndex);)
+        final ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out)))
         {
             resources.forEach((l) -> {
                 try
                 {
                     writer.append(l).append('\n');
                 }
-                catch (final IOException e)
+                catch (final IOException ex)
                 {
-                    throw new UncheckedIOException(e);
+                    throw new UncheckedIOException(ex);
                 }
             });
         }
+        z.write(out.toByteArray());
+
     }
 
-    static SubstrateInfo create(long id, Path path, Config config)
+    static SubstrateInfo create(ZipOutputStream z, long id, Path path, Config config)
     {
         final SubstrateInfo info = new SubstrateInfo();
         info.path = path;
@@ -145,18 +162,20 @@ public class SubstrateService
             info.version = attributes.getValue(Constants.BUNDLE_VERSION);
             info.id = Long.toString(id);
 
-            final Path out = config.outputDir.resolve(SUBSTRATE_LIB).resolve(info.id);
-
-            Files.createDirectories(out);
-            info.out = out;
-
             info.files = jar.stream().filter(j -> filter(j, config)).peek(j -> {
                 try
                 {
-                    final Path target = out.resolve(j.getName());
-                    Files.createDirectories(target);
-                    Files.copy(jar.getInputStream(j), target,
-                        StandardCopyOption.REPLACE_EXISTING);
+                    final ZipEntry entry = new ZipEntry("/" + id + "/" + j.getName());
+                    if (j.getCreationTime() != null)
+                    {
+                        entry.setCreationTime(j.getCreationTime());
+                    }
+                    if (j.getComment() != null)
+                    {
+                        entry.setComment(j.getComment());
+                    }
+                    z.putNextEntry(entry);
+                    z.write(jar.getInputStream(j).readAllBytes());
                 }
                 catch (final IOException e)
                 {
