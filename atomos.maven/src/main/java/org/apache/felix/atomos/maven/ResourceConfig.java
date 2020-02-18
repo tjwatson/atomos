@@ -66,8 +66,6 @@ public class ResourceConfig
         return result;
     }
 
-
-
     public static String createContent(ResourceConfigResult result)
     {
         final Set<String> allResourceBundles = result.allResourceBundles;
@@ -117,62 +115,63 @@ public class ResourceConfig
         for (final Path path : paths)
         {
 
-            final JarFile jar = new JarFile(path.toFile());
-
-            pattern: for (final JarEntry entry : jar.stream().collect(
-                Collectors.toList()))
+            try (final JarFile jar = new JarFile(path.toFile());)
             {
-                final String entryName = entry.getName();
-                if (entry.isDirectory())
+                pattern: for (final JarEntry entry : jar.stream().collect(
+                    Collectors.toList()))
                 {
-                    continue;
-                }
-                if (entryName.indexOf('/') == -1)
-                {
-                    continue;
-                }
-                if (entryName.startsWith(SERVICES))
-                {
+                    final String entryName = entry.getName();
+                    if (entry.isDirectory())
+                    {
+                        continue;
+                    }
+                    if (entryName.indexOf('/') == -1)
+                    {
+                        continue;
+                    }
+                    if (entryName.startsWith(SERVICES))
+                    {
+                        allResourcePatterns.add(entryName);
+                        continue;
+                    }
+                    for (final String excluded : EXCLUDE_NAMES)
+                    {
+                        if (entryName.endsWith(excluded))
+                        {
+                            continue pattern;
+                        }
+                    }
+                    for (final String excluded : EXCLUDE_DIRS)
+                    {
+                        if (entryName.startsWith(excluded))
+                        {
+                            continue pattern;
+                        }
+                    }
+                    if (entryName.endsWith(CLASS_SUFFIX))
+                    {
+                        // just looking for resource bundle for french as an indicator
+                        if (entryName.endsWith(FRENCH_BUNDLE_CLASS))
+                        {
+                            final String bundleName = entryName.substring(0,
+                                entryName.length()
+                                - FRENCH_BUNDLE_CLASS.length()).replace('/', '.');
+                            final String bundlePackage = bundleName.substring(0,
+                                bundleName.lastIndexOf('.'));
+                            allResourceBundles.add(bundleName);
+                            allResourcePackages.add(bundlePackage);
+                        }
+                        continue;
+                    }
+                    if (entryName.endsWith(FRENCH_BUNDLE_PROPS))
+                    {
+                        allResourceBundles.add(entryName.substring(0,
+                            entryName.length() - FRENCH_BUNDLE_PROPS.length()).replace(
+                                '/', '.'));
+                        continue;
+                    }
                     allResourcePatterns.add(entryName);
-                    continue;
                 }
-                for (final String excluded : EXCLUDE_NAMES)
-                {
-                    if (entryName.endsWith(excluded))
-                    {
-                        continue pattern;
-                    }
-                }
-                for (final String excluded : EXCLUDE_DIRS)
-                {
-                    if (entryName.startsWith(excluded))
-                    {
-                        continue pattern;
-                    }
-                }
-                if (entryName.endsWith(CLASS_SUFFIX))
-                {
-                    // just looking for resource bundle for french as an indicator
-                    if (entryName.endsWith(FRENCH_BUNDLE_CLASS))
-                    {
-                        final String bundleName = entryName.substring(0,
-                            entryName.length() - FRENCH_BUNDLE_CLASS.length()).replace(
-                                '/', '.');
-                        final String bundlePackage = bundleName.substring(0,
-                            bundleName.lastIndexOf('.'));
-                        allResourceBundles.add(bundleName);
-                        allResourcePackages.add(bundlePackage);
-                    }
-                    continue;
-                }
-                if (entryName.endsWith(FRENCH_BUNDLE_PROPS))
-                {
-                    allResourceBundles.add(entryName.substring(0,
-                        entryName.length() - FRENCH_BUNDLE_PROPS.length()).replace('/',
-                            '.'));
-                    continue;
-                }
-                allResourcePatterns.add(entryName);
             }
         }
     }
