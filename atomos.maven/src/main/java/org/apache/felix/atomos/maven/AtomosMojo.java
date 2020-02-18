@@ -114,6 +114,9 @@ public class AtomosMojo extends AbstractMojo
             final ResourceConfigResult resourceConfigResult = ResourceConfig.resourceConfig(
                 paths, config);
 
+            //TODO: Remove. add /native-image/ into atomos-substrate.jar
+            resourceConfigResult.allResourcePatterns.add("atomos/.*$");
+
             final List<String> argsPath = BuildArgs.create(config, reflectConfigs,
                 resourceConfigResult);
 
