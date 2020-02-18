@@ -30,10 +30,10 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.jar.JarOutputStream;
+import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 import org.osgi.framework.Constants;
 
@@ -101,13 +101,13 @@ public class SubstrateService
         }
 
         final Path p = config.outputDir.resolve(ATOMOS_SUBSTRATE_JAR);
-        try (final ZipOutputStream z = new ZipOutputStream(
-            new FileOutputStream(p.toFile()));)
+
+        final Manifest manifest = new Manifest();
+        manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
+        try (final JarOutputStream z = new JarOutputStream(
+            new FileOutputStream(p.toFile()), manifest);)
         {
 
-            final ZipEntry manifestZipEntry = new ZipEntry("/META-INF/MANIFEST.MF");
-            z.putNextEntry(manifestZipEntry);
-            z.write("Manifest-Version: 1.0".getBytes());
             final List<String> resources = new ArrayList<>();
             final AtomicLong counter = new AtomicLong(0);
             final Stream<SubstrateInfo> bis = files.stream()//
@@ -126,11 +126,11 @@ public class SubstrateService
         return p;
     }
 
-    private static void writeBundleIndexFile(ZipOutputStream z, Path output,
+    private static void writeBundleIndexFile(JarOutputStream z, Path output,
         final List<String> resources) throws IOException
     {
 
-        final ZipEntry e = new ZipEntry(ATOMOS_BUNDLES_INDEX);
+        final JarEntry e = new JarEntry(ATOMOS_BUNDLES_INDEX);
         z.putNextEntry(e);
 
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -151,7 +151,7 @@ public class SubstrateService
 
     }
 
-    static SubstrateInfo create(ZipOutputStream z, long id, Path path, Config config)
+    static SubstrateInfo create(JarOutputStream z, long id, Path path, Config config)
     {
         final SubstrateInfo info = new SubstrateInfo();
         info.path = path;
@@ -165,7 +165,7 @@ public class SubstrateService
             info.files = jar.stream().filter(j -> filter(j, config)).peek(j -> {
                 try
                 {
-                    final ZipEntry entry = new ZipEntry("/" + id + "/" + j.getName());
+                    final JarEntry entry = new JarEntry("/" + id + "/" + j.getName());
                     if (j.getCreationTime() != null)
                     {
                         entry.setCreationTime(j.getCreationTime());
