@@ -67,7 +67,7 @@ public class BuildArgs
         if (config.dynamicProxyConfigurationFiles != null
             && !config.dynamicProxyConfigurationFiles.isEmpty())
         {
-            args.add("--H:DynamicProxyConfigurationFiles="
+            args.add("-H:DynamicProxyConfigurationFiles="
                 + config.dynamicProxyConfigurationFiles.stream().map(
                     p -> p.toAbsolutePath().toString()).collect(Collectors.joining(",")));
         }
