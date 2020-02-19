@@ -57,7 +57,7 @@ public class BuildArgs
             args.add("-H:ReflectionConfigurationFiles=" + reflectConfig.toString());
         }
         //H:ResourceConfigurationFiles
-        final String resourceConfigContent = ResourceConfig.createContent(
+        final String resourceConfigContent = ResourceConfig.createResourceJson(
             resourceConfigResult);
 
         if (!resourceConfigContent.isEmpty())

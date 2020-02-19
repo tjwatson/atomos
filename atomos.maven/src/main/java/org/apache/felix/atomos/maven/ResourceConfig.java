@@ -66,10 +66,14 @@ public class ResourceConfig
         return result;
     }
 
-    public static String createContent(ResourceConfigResult result)
+    public static String createResourceJson(ResourceConfigResult result)
     {
-        final Set<String> allResourceBundles = result.allResourceBundles;
-        final Set<String> allResourcePatterns = result.allResourcePatterns;
+
+        final TreeSet<String> allResourceBundles = new TreeSet<>((o1,o2)->o1.compareTo(o2));
+        allResourceBundles.addAll( result.allResourceBundles);
+        final TreeSet<String> allResourcePatterns = new TreeSet<>(
+            (o1, o2) -> o1.compareTo(o2));
+        allResourcePatterns.addAll( result.allResourcePatterns);
 
         final AtomicBoolean first = new AtomicBoolean();
         final StringBuilder resourceConfig = new StringBuilder();

@@ -77,7 +77,10 @@ public class MojoTest
 
         final Config config = new Config();
         config.outputDir = tempDir;
-        SubstrateService.substrate(Arrays.asList(path), config);
+        final Path atomosSubstrateJar = SubstrateService.substrate(Arrays.asList(path),
+            config);
+        System.out.println(atomosSubstrateJar);
+        System.out.println(atomosSubstrateJar);
     }
 
     @Test
@@ -126,8 +129,7 @@ public class MojoTest
 
         System.out.println(testDepsDir);
         return Files.list(testDepsDir).peek(System.out::println).filter(
-            p -> p.toString().endsWith(".jar")).collect(
-                Collectors.toList());
+            p -> p.toString().endsWith(".jar")).collect(Collectors.toList());
     }
 
     private Path getTestDependencyFileTested(String depName) throws IOException

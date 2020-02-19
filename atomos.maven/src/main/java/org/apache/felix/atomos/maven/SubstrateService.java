@@ -108,25 +108,48 @@ public class SubstrateService
             new FileOutputStream(p.toFile()), manifest);)
         {
 
+            final List<String> bundleIndexLines = new ArrayList<>();
             final List<String> resources = new ArrayList<>();
             final AtomicLong counter = new AtomicLong(0);
             final Stream<SubstrateInfo> bis = files.stream()//
                 .map(path -> create(z, counter.getAndIncrement(), path, config))//
                 .peek(System.out::println);
             bis.forEach(s -> {
-                resources.add(ATOMOS_BUNDLE_SEPARATOR);
-                resources.add(s.id);
-                resources.add(s.bsn);
-                resources.add(s.version);
-                s.files.forEach(resources::add);
+                bundleIndexLines.add(ATOMOS_BUNDLE_SEPARATOR);
+                bundleIndexLines.add(s.id);
+                bundleIndexLines.add(s.bsn);
+                bundleIndexLines.add(s.version);
+                s.files.forEach(f -> {
+                    bundleIndexLines.add(f);
+                    resources.add(s.id + "/" + f);
+                });
             });
-            writeBundleIndexFile(z, config.outputDir, resources);
+            writeBundleIndexFile(z, bundleIndexLines);
+            writeGraalResourceConfig(z, resources);
+
         }
         System.out.println("end");
         return p;
     }
 
-    private static void writeBundleIndexFile(JarOutputStream z, Path output,
+    private static void writeGraalResourceConfig(JarOutputStream z,
+        List<String> resources) throws IOException
+    {
+        resources.add("atomos/bundles.index");
+
+        final ResourceConfigResult result = new ResourceConfigResult();
+        result.allResourcePatterns.addAll(resources);
+
+        final String graalResConfJson = ResourceConfig.createResourceJson(result);
+
+        final JarEntry graalResConfEntry = new JarEntry(
+            "META-INF/native-image/graal_resource_config.json");
+        z.putNextEntry(graalResConfEntry);
+        z.write(graalResConfJson.getBytes());
+
+    }
+
+    private static void writeBundleIndexFile(JarOutputStream z,
         final List<String> resources) throws IOException
     {
 
