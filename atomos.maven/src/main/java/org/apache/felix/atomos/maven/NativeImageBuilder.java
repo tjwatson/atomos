@@ -64,6 +64,7 @@ public class NativeImageBuilder
      */
     private static Path findNativeImageExecutable(Config config)
     {
+
         Path exec = null;
         if (config.nativeImageExec != null)
         {
@@ -75,7 +76,7 @@ public class NativeImageBuilder
         }
         if (exec == null && System.getProperty("graal.home") != null)
         {
-            exec = findNativeImageExec(Paths.get(System.getProperty("graal.home")));
+            exec = findNativeImageExec(Paths.get(System.getenv("GRAAL_HOME")));
         }
 
         if (exec == null && System.getProperty("java.home") != null)
