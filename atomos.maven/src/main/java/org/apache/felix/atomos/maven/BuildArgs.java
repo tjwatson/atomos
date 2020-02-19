@@ -63,15 +63,14 @@ public class BuildArgs
             args.add("-H:ResourceConfigurationFiles=" + files);
         }
 
-        //        //H:DynamicProxyConfigurationFiles
-        //        final Path dynamicProxyConfigurationFile = null;
-        //
-        //        if (dynamicProxyConfigurationFile != null)
-        //        {
-        //            args.add(
-        //                "--H:DynamicProxyConfigurationFiles=" + dynamicProxyConfigurationFile);
-        //        }
-
+        //H:DynamicProxyConfigurationFiles
+        if (config.dynamicProxyConfigurationFiles != null
+            && !config.dynamicProxyConfigurationFiles.isEmpty())
+        {
+            args.add("--H:DynamicProxyConfigurationFiles="
+                + config.dynamicProxyConfigurationFiles.stream().map(
+                    p -> p.toAbsolutePath().toString()).collect(Collectors.joining(",")));
+        }
         //other
         args.add("-H:+ReportUnsupportedElementsAtRuntime");
         args.add("-H:+ReportExceptionStackTraces");

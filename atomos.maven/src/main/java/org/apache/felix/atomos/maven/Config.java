@@ -16,5 +16,6 @@ public class Config
     public List<String> additionalInitializeAtBuildTime;
     public boolean debug = false;
     public List<Path> resourceConfigs;
+    public List<Path> dynamicProxyConfigurationFiles;
 
 }

@@ -144,6 +144,9 @@
                     <graalResourceConfigFile>
                         <graalResourceConfigFile>additionalResourceConfig.json</graalResourceConfigFile>
                     </graalResourceConfigFile>
+                    <graalResourceConfigFile>
+                        <graalResourceConfigFile>proxy_config.json</graalResourceConfigFile>
+                    </graalResourceConfigFile>
                     <mainClass>org.apache.felix.atomos.tests.testbundles.substrate.main.GogoConsole</mainClass>
                 </configuration>
                 <executions>

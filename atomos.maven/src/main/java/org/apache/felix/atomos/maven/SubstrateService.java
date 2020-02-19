@@ -132,7 +132,7 @@ public class SubstrateService
         return p;
     }
 
-    private static void writeGraalResourceConfig(JarOutputStream z,
+    private static void writeGraalResourceConfig(JarOutputStream jos,
         List<String> resources) throws IOException
     {
         resources.add("atomos/bundles.index");
@@ -144,17 +144,17 @@ public class SubstrateService
 
         final JarEntry graalResConfEntry = new JarEntry(
             "META-INF/native-image/resource-config.json");
-        z.putNextEntry(graalResConfEntry);
-        z.write(graalResConfJson.getBytes());
+        jos.putNextEntry(graalResConfEntry);
+        jos.write(graalResConfJson.getBytes());
 
     }
 
-    private static void writeBundleIndexFile(JarOutputStream z,
+    private static void writeBundleIndexFile(JarOutputStream jos,
         final List<String> resources) throws IOException
     {
 
-        final JarEntry e = new JarEntry(ATOMOS_BUNDLES_INDEX);
-        z.putNextEntry(e);
+        final JarEntry atomosIndexEntry = new JarEntry(ATOMOS_BUNDLES_INDEX);
+        jos.putNextEntry(atomosIndexEntry);
 
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
         try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out)))
@@ -170,11 +170,11 @@ public class SubstrateService
                 }
             });
         }
-        z.write(out.toByteArray());
+        jos.write(out.toByteArray());
 
     }
 
-    static SubstrateInfo create(JarOutputStream z, long id, Path path, Config config)
+    static SubstrateInfo create(JarOutputStream jos, long id, Path path, Config config)
     {
         final SubstrateInfo info = new SubstrateInfo();
         info.path = path;
@@ -197,8 +197,8 @@ public class SubstrateService
                     {
                         entry.setComment(j.getComment());
                     }
-                    z.putNextEntry(entry);
-                    z.write(jar.getInputStream(j).readAllBytes());
+                    jos.putNextEntry(entry);
+                    jos.write(jar.getInputStream(j).readAllBytes());
                 }
                 catch (final IOException e)
                 {

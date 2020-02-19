@@ -64,7 +64,10 @@ public class AtomosMojo extends AbstractMojo
     private List<String> additionalInitializeAtBuildTime;
 
     @Parameter
-    private List<File> graalResourceConfigFile;
+    private List<Path> graalResourceConfigFile;
+
+    @Parameter
+    private List<Path> dynamicProxyConfigurationFile;
 
     public static boolean isJarFile(Path path)
     {
@@ -104,9 +107,17 @@ public class AtomosMojo extends AbstractMojo
 
             if (graalResourceConfigFile != null && !graalResourceConfigFile.isEmpty())
             {
-                config.resourceConfigs = graalResourceConfigFile.stream().map(
-                    File::toPath).collect(Collectors.toList());
+                config.resourceConfigs = graalResourceConfigFile.stream().collect(
+                    Collectors.toList());
             }
+
+            if (dynamicProxyConfigurationFile != null
+                && !dynamicProxyConfigurationFile.isEmpty())
+            {
+                config.dynamicProxyConfigurationFiles = dynamicProxyConfigurationFile.stream().collect(
+                    Collectors.toList());
+            }
+
             config.nativeImageExec = nativeImageExecutable;
 
             final List<Path> paths = Files.list(classpath_lib.toPath()).filter(
