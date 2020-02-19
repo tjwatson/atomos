@@ -63,6 +63,9 @@ public class AtomosMojo extends AbstractMojo
     @Parameter
     private List<String> additionalInitializeAtBuildTime;
 
+    @Parameter
+    private List<File> graalResourceConfigFile;
+
     public static boolean isJarFile(Path path)
     {
         try (JarFile j = new JarFile(path.toFile());)
@@ -82,7 +85,6 @@ public class AtomosMojo extends AbstractMojo
     public void execute() throws MojoExecutionException
     {
         getLog().info("outputDirectory" + outputDirectory);
-
         try
         {
             Files.createDirectories(outputDirectory.toPath());
@@ -97,17 +99,20 @@ public class AtomosMojo extends AbstractMojo
             }
             else
             {
-
                 config.imageName = imageName;
             }
 
+            if (graalResourceConfigFile != null && !graalResourceConfigFile.isEmpty())
+            {
+                config.resourceConfigs = graalResourceConfigFile.stream().map(
+                    File::toPath).collect(Collectors.toList());
+            }
             config.nativeImageExec = nativeImageExecutable;
 
             final List<Path> paths = Files.list(classpath_lib.toPath()).filter(
                 AtomosMojo::isJarFile).collect(Collectors.toList());
 
             final Path p = SubstrateService.substrate(paths, config);
-
 
             final Map<String, ClassConfig> reflectConfigs = ReflectConfig.reflectConfig(
                 paths, config);

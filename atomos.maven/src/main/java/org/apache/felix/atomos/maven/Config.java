@@ -15,5 +15,6 @@ public class Config
     public String nativeImageExec;
     public List<String> additionalInitializeAtBuildTime;
     public boolean debug = false;
+    public List<Path> resourceConfigs;
 
 }

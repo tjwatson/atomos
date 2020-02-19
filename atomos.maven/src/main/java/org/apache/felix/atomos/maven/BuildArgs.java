@@ -16,8 +16,6 @@ import org.apache.felix.atomos.maven.ReflectConfig.ClassConfig;
 public class BuildArgs
 {
 
-
-
     public static List<String> create(Config config,
         Map<String, ClassConfig> reflectConfigs,
         ResourceConfigResult resourceConfigResult) throws IOException
@@ -57,16 +55,14 @@ public class BuildArgs
             args.add("-H:ReflectionConfigurationFiles=" + reflectConfig.toString());
         }
         //H:ResourceConfigurationFiles
-        final String resourceConfigContent = ResourceConfig.createResourceJson(
-            resourceConfigResult);
 
-        if (!resourceConfigContent.isEmpty())
+        if (config.resourceConfigs != null && !config.resourceConfigs.isEmpty())
         {
-            final Path resourceConfig = config.outputDir.resolve(
-                "graal_resource_config.json");
-            Files.write(resourceConfig, resourceConfigContent.getBytes());
-            args.add("-H:ResourceConfigurationFiles=" + resourceConfig);
+            final String files = config.resourceConfigs.stream().map(
+                p -> p.toAbsolutePath().toString()).collect(Collectors.joining(","));
+            args.add("-H:ResourceConfigurationFiles=" + files);
         }
+
         //        //H:DynamicProxyConfigurationFiles
         //        final Path dynamicProxyConfigurationFile = null;
         //

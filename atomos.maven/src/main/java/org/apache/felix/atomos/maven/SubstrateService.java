@@ -143,7 +143,7 @@ public class SubstrateService
         final String graalResConfJson = ResourceConfig.createResourceJson(result);
 
         final JarEntry graalResConfEntry = new JarEntry(
-            "META-INF/native-image/graal_resource_config.json");
+            "META-INF/native-image/resource-config.json");
         z.putNextEntry(graalResConfEntry);
         z.write(graalResConfJson.getBytes());
 
