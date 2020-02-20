@@ -68,6 +68,10 @@ public class ResourceConfig
 
     public static String createResourceJson(ResourceConfigResult result)
     {
+        if (true)
+        {
+            return "{\"resources\" : [ {\"pattern\": \"atomos/.*$\"} ] }";
+        }
 
         final TreeSet<String> allResourceBundles = new TreeSet<>((o1,o2)->o1.compareTo(o2));
         allResourceBundles.addAll( result.allResourceBundles);

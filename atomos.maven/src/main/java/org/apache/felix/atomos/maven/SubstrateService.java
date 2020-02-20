@@ -49,7 +49,7 @@ public class SubstrateService
         "LICENSE.txt");
     private static final Collection<String> DEFAULT_EXCLUDE_PATHS = Arrays.asList(
         "META-INF/maven/", "OSGI-OPT/");
-    public static final String ATOMOS_BUNDLES = "/atomos/";
+    public static final String ATOMOS_BUNDLES = "atomos/";
     public static final String ATOMOS_BUNDLES_INDEX = ATOMOS_BUNDLES + "bundles.index";
     private static final String ATOMOS_BUNDLE_SEPARATOR = "ATOMOS_BUNDLE";
 
@@ -115,14 +115,17 @@ public class SubstrateService
                 .map(path -> create(z, counter.getAndIncrement(), path, config))//
                 .peek(System.out::println);
             bis.forEach(s -> {
-                bundleIndexLines.add(ATOMOS_BUNDLE_SEPARATOR);
-                bundleIndexLines.add(s.id);
-                bundleIndexLines.add(s.bsn);
-                bundleIndexLines.add(s.version);
-                s.files.forEach(f -> {
-                    bundleIndexLines.add(f);
-                    resources.add(s.id + "/" + f);
-                });
+                if (s.bsn != null)
+                {
+                    bundleIndexLines.add(ATOMOS_BUNDLE_SEPARATOR);
+                    bundleIndexLines.add(s.id);
+                    bundleIndexLines.add(s.bsn);
+                    bundleIndexLines.add(s.version);
+                    s.files.forEach(f -> {
+                        bundleIndexLines.add(f);
+                        resources.add(s.id + "/" + f);
+                    });
+                }
             });
             writeBundleIndexFile(z, bundleIndexLines);
             writeGraalResourceConfig(z, resources);
@@ -135,7 +138,7 @@ public class SubstrateService
     private static void writeGraalResourceConfig(JarOutputStream jos,
         List<String> resources) throws IOException
     {
-        resources.add("atomos/bundles.index");
+        resources.add(ATOMOS_BUNDLES_INDEX);
 
         final ResourceConfigResult result = new ResourceConfigResult();
         result.allResourcePatterns.addAll(resources);
@@ -185,10 +188,19 @@ public class SubstrateService
             info.version = attributes.getValue(Constants.BUNDLE_VERSION);
             info.id = Long.toString(id);
 
+            if (info.bsn == null)
+            {
+                return info;
+            }
+            if (info.version == null)
+            {
+                info.version = "0.0";
+            }
             info.files = jar.stream().filter(j -> filter(j, config)).peek(j -> {
                 try
                 {
-                    final JarEntry entry = new JarEntry("/" + id + "/" + j.getName());
+                    final JarEntry entry = new JarEntry(
+                        ATOMOS_BUNDLES + id + "/" + j.getName());
                     if (j.getCreationTime() != null)
                     {
                         entry.setCreationTime(j.getCreationTime());
